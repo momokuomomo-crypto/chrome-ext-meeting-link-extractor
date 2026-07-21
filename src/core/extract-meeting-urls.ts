@@ -55,6 +55,43 @@ export function stripTrailingPunctuation(candidate: string): string {
   return candidate.replace(TRAILING_PUNCTUATION, "");
 }
 
+function tryParseMeetingUrl(candidate: string): URL | null {
+  try {
+    const url = new URL(candidate);
+    return isMeetingUrl(url) ? url : null;
+  } catch {
+    return null;
+  }
+}
+
+// 候補抽出の正規表現（\S+）は空白文字までを貪欲にマッチするため、閉じ
+// 括弧の直後にスペース無しで地の文が続く実際によくある書き方
+// （例："【https://meet.google.com/abc-defg-hij】をご確認ください"）では、
+// 会議URLの後ろに続く地の文までもが1つの候補として飲み込まれる。地の文は
+// TRAILING_PUNCTUATIONの文字クラスに含まれないため、末尾からの除去だけ
+// では対応できない（実Chromeスモークテスト監査で発見）。
+//
+// まず通常どおり末尾の記号除去だけで有効な会議URLになるか試し、失敗した
+// 場合は候補内に現れる区切り記号の出現位置ごとに手前で切り詰めて再検証
+// する。区切り記号はURLの正当な構成要素（例：Teamsの"thread.v2"の"."）
+// にも偶然含まれ得るため、最初に見つかった位置だけで決め打ちせず、
+// 実際に有効な会議URLとして検証できる位置が見つかるまで順に試す。
+function extractValidMeetingUrl(rawCandidate: string): { text: string; url: URL } | null {
+  const stripped = stripTrailingPunctuation(rawCandidate);
+  const direct = tryParseMeetingUrl(stripped);
+  if (direct) return { text: stripped, url: direct };
+
+  const punctuationPositions = /[)\]}>.,;:!?'"」』）】］｝〉》”’、。！？]/g;
+  let match: RegExpExecArray | null;
+  while ((match = punctuationPositions.exec(rawCandidate)) !== null) {
+    const truncated = rawCandidate.slice(0, match.index);
+    const candidate = tryParseMeetingUrl(truncated);
+    if (candidate) return { text: truncated, url: candidate };
+  }
+
+  return null;
+}
+
 const URL_CANDIDATE_PATTERN = /https:\/\/\S+/g;
 
 // 重複排除の比較キー。末尾の単一スラッシュを除去し、fragment（#以降）は
@@ -80,19 +117,13 @@ export function extractMeetingUrls(sources: readonly string[]): string[] {
     if (!matches) continue;
 
     for (const raw of matches) {
-      const stripped = stripTrailingPunctuation(raw);
-      let url: URL;
-      try {
-        url = new URL(stripped);
-      } catch {
-        continue;
-      }
-      if (!isMeetingUrl(url)) continue;
+      const extracted = extractValidMeetingUrl(raw);
+      if (!extracted) continue;
 
-      const key = dedupeKeyOf(url);
+      const key = dedupeKeyOf(extracted.url);
       if (seen.has(key)) continue;
       seen.add(key);
-      result.push(stripped);
+      result.push(extracted.text);
     }
   }
 

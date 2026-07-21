@@ -152,6 +152,20 @@ describe("extractMeetingUrls：抽出・重複排除・順序", () => {
     ]);
   });
 
+  it("閉じ括弧の直後にスペース無しで地の文が続いても正しく抽出する（監査で発見：以前は無言で抽出漏れになっていた）", () => {
+    expect(
+      extractMeetingUrls(["会議URLは【https://meet.google.com/abc-defg-hij】をご確認ください"]),
+    ).toEqual(["https://meet.google.com/abc-defg-hij"]);
+    expect(extractMeetingUrls(["【https://zoom.us/j/123456789】に接続してください"])).toEqual([
+      "https://zoom.us/j/123456789",
+    ]);
+  });
+
+  it("Teamsのthread.v2に含まれる\".\"が誤った切り詰め位置にならず、地の文の直後まで正しく抽出する", () => {
+    const url = "https://teams.microsoft.com/l/meetup-join/19%3ameeting_abc%40thread.v2/1234567890";
+    expect(extractMeetingUrls([`【${url}】に参加してください`])).toEqual([url]);
+  });
+
   it("Teamsの長いcontextクエリを壊さずに抽出する", () => {
     const url =
       "https://teams.microsoft.com/l/meetup-join/19%3ameeting_abc%40thread.v2/0?context=%7B%22Tid%22%3A%221%22%2C%22Oid%22%3A%222%22%7D";
