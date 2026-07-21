@@ -55,6 +55,16 @@ tests/
   integration/                      # background.tsの統合テスト（sinon-chrome）
 ```
 
+## 収益化方法
+
+無料。
+
+## 将来の拡張案
+
+- カレンダー自動登録連携
+
+出典：[稟議書_Chrome拡張機能アイデア.md（項目10）](https://github.com/momokuomomo-crypto/ai-council-output/blob/master/chrome-extension-ideas/稟議書_Chrome拡張機能アイデア.md)
+
 ## 開発の経緯
 
 [ai-build-council](https://github.com/momokuomomo-crypto/ai-build-council)
