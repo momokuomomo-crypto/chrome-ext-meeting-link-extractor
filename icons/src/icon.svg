@@ -1,0 +1,8 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <rect width="128" height="128" rx="28" fill="#0f766e"/>
+  <!-- カメラ（会議）アイコン -->
+  <rect x="24" y="44" width="56" height="40" rx="8" fill="#ffffff"/>
+  <path d="M84 56 L104 46 V82 L84 72 Z" fill="#ffffff"/>
+  <!-- リンクの輪 -->
+  <rect x="34" y="58" width="24" height="14" rx="7" fill="none" stroke="#0f766e" stroke-width="4"/>
+</svg>
